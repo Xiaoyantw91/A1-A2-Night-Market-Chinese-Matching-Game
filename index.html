@@ -156,4 +156,226 @@
         }
 
         @keyframes shake {
-            0
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* 底部浮動狀態列 */
+        #selection-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--text-main);
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 18px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+            z-index: 999;
+        }
+
+        #selection-bar.show {
+            transform: translateY(0);
+        }
+
+        #selected-char {
+            color: #F1C40F;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+
+        /* 破關畫面 */
+        #overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 1000;
+            display: none;
+        }
+        
+        #overlay h1 { font-size: 40px; color: var(--success); margin-bottom: 20px; }
+        
+        button {
+            padding: 12px 30px;
+            font-size: 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <header>中英配對翻翻卡</header>
+    
+    <div class="container">
+        <div class="stats">配對進度: <span id="score">0</span> / 15</div>
+        
+        <h2>1. 點擊選擇中文字卡：</h2>
+        <div id="card-pool" class="grid-cards"></div>
+        
+        <h2>2. 點擊放入對應的英文框：</h2>
+        <div id="slot-pool" class="grid-slots"></div>
+    </div>
+
+    <!-- 底部浮動列：提示目前選中的字 -->
+    <div id="selection-bar">
+        目前選取：<span id="selected-char"></span>
+    </div>
+
+    <!-- 破關畫面 -->
+    <div id="overlay">
+        <h1>🎉 恭喜完成！</h1>
+        <button onclick="initGame()">再玩一次</button>
+    </div>
+
+    <script>
+        const wordData = [
+            { zh: '我', en: 'I / Me' },
+            { zh: '吃', en: 'Eat' },
+            { zh: '喝', en: 'Drink' },
+            { zh: '買', en: 'Buy' },
+            { zh: '錢', en: 'Money' },
+            { zh: '多', en: 'Many / More' },
+            { zh: '少', en: 'Few / Less' },
+            { zh: '大', en: 'Big' },
+            { zh: '小', en: 'Small' },
+            { zh: '請', en: 'Please' },
+            { zh: '要', en: 'Want' },
+            { zh: '不', en: 'Not / No' },
+            { zh: '給', en: 'Give' },
+            { zh: '茶', en: 'Tea' },
+            { zh: '飯', en: 'Rice / Meal' }
+        ];
+
+        let selectedNode = null;
+        let score = 0;
+        const totalScore = wordData.length;
+
+        // 洗牌演算法
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function initGame() {
+            score = 0;
+            selectedNode = null;
+            document.getElementById('score').innerText = score;
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('selection-bar').classList.remove('show');
+            
+            const cardPool = document.getElementById('card-pool');
+            const slotPool = document.getElementById('slot-pool');
+            cardPool.innerHTML = '';
+            slotPool.innerHTML = '';
+
+            // 準備打亂的中文與英文陣列
+            let zhArray = shuffle([...wordData]);
+            let enArray = shuffle([...wordData]);
+
+            // 渲染中文字卡
+            zhArray.forEach(item => {
+                let card = document.createElement('div');
+                card.className = 'card';
+                card.innerText = item.zh;
+                card.dataset.zh = item.zh;
+                card.dataset.en = item.en;
+                
+                card.addEventListener('click', () => selectCard(card));
+                cardPool.appendChild(card);
+            });
+
+            // 渲染英文目標框
+            enArray.forEach(item => {
+                let slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.dataset.en = item.en;
+                
+                slot.innerHTML = `
+                    <div class="zh-text"></div>
+                    <div class="en-text">${item.en}</div>
+                `;
+                
+                slot.addEventListener('click', () => tryMatch(slot));
+                slotPool.appendChild(slot);
+            });
+        }
+
+        // 步驟 1: 選取中文字卡
+        function selectCard(cardNode) {
+            // 取消之前的選取狀態
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            
+            selectedNode = cardNode;
+            cardNode.classList.add('selected');
+
+            // 更新底部浮動狀態列
+            document.getElementById('selected-char').innerText = cardNode.dataset.zh;
+            document.getElementById('selection-bar').classList.add('show');
+        }
+
+        // 步驟 2: 點擊英文框嘗試配對
+        function tryMatch(slotNode) {
+            if (!selectedNode) return; // 沒有選取中文字就點擊無效
+            if (slotNode.classList.contains('success')) return; // 已經配對成功的框不處理
+
+            const targetEn = slotNode.dataset.en;
+            const selectedEn = selectedNode.dataset.en;
+
+            if (targetEn === selectedEn) {
+                // 配對成功
+                slotNode.classList.add('success');
+                slotNode.querySelector('.zh-text').innerText = selectedNode.dataset.zh;
+                
+                // 隱藏中文字卡
+                selectedNode.classList.add('matched-hide');
+                selectedNode.classList.remove('selected');
+                selectedNode = null;
+
+                // 重置浮動狀態列
+                document.getElementById('selection-bar').classList.remove('show');
+                
+                score++;
+                document.getElementById('score').innerText = score;
+
+                // 檢查是否過關
+                if (score === totalScore) {
+                    setTimeout(() => {
+                        document.getElementById('overlay').style.display = 'flex';
+                    }, 500);
+                }
+            } else {
+                // 配對失敗：震動並閃爍紅光
+                slotNode.classList.add('error');
+                setTimeout(() => {
+                    slotNode.classList.remove('error');
+                }, 400);
+            }
+        }
+
+        // 啟動遊戲
+        window.onload = initGame;
+    </script>
+</body>
+</html>
