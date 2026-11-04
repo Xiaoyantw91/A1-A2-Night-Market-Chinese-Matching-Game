@@ -3,271 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中英配對學習遊戲</title>
+    <title>中英單詞配對遊戲</title>
     <style>
         :root {
-            --primary: #4A90E2;
-            --success: #2ECC71;
-            --danger: #E74C3C;
-            --bg-color: #F5F7FA;
-            --card-bg: #FFFFFF;
-            --text-main: #2C3E50;
+            --primary: #4a90e2;
+            --success: #4caf50;
+            --error: #f44336;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            font-family: 'Helvetica Neue', Arial, 'LiHei Pro', '微軟正黑體', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
             margin: 0;
-            padding: 0;
-            padding-bottom: 80px; /* 留給底部浮動列的空間 */
-            user-select: none;
-            -webkit-user-select: none;
+            padding: 15px;
+            background-color: var(--bg);
+            color: var(--text);
+            text-align: center;
         }
 
-        header {
-            background-color: var(--primary);
-            color: white;
-            text-align: center;
-            padding: 15px 0;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        .header {
+            margin-bottom: 20px;
             position: sticky;
             top: 0;
+            background: rgba(245, 247, 250, 0.95);
+            padding: 10px 0;
             z-index: 100;
+            border-bottom: 2px solid #e0e0e0;
         }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 15px;
-        }
-
-        .stats {
-            text-align: center;
-            font-size: 18px;
-            margin-bottom: 20px;
-            font-weight: bold;
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 1.5rem;
             color: var(--primary);
         }
 
-        h2 {
-            font-size: 18px;
-            border-left: 4px solid var(--primary);
-            padding-left: 10px;
-            margin-top: 25px;
-            margin-bottom: 15px;
+        .progress {
+            font-size: 1.2rem;
+            font-weight: bold;
         }
 
-        /* 網格系統：字卡區與目標框區 */
-        .grid-cards, .grid-slots {
+        .zone-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin: 15px 0 10px 0;
+            color: #555;
+            text-align: left;
+            padding-left: 5px;
+        }
+
+        /* 網格佈局：手機預設 3 欄，平板/桌機 5 欄 */
+        .grid-zone {
             display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
+            margin-bottom: 20px;
         }
 
-        .grid-cards { grid-template-columns: repeat(5, 1fr); }
-        .grid-slots { grid-template-columns: repeat(3, 1fr); }
-
-        @media (max-width: 500px) {
-            .grid-cards { grid-template-columns: repeat(4, 1fr); }
-            .grid-slots { grid-template-columns: repeat(2, 1fr); }
+        @media (min-width: 768px) {
+            .grid-zone {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 15px;
+            }
         }
 
-        /* 中文字卡樣式 */
         .card {
             background: var(--card-bg);
-            border: 2px solid #DCDDE1;
+            border: 2px solid #ddd;
             border-radius: 8px;
-            text-align: center;
             padding: 15px 5px;
-            font-size: 28px;
+            font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+            word-break: break-word;
         }
 
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* 點擊選取狀態 */
         .card.selected {
             border-color: var(--primary);
-            background-color: #EBF5FF;
+            background-color: #e3f2fd;
+            box-shadow: 0 0 8px var(--primary);
             transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
         }
 
-        .card.matched-hide {
-            visibility: hidden;
+        /* 配對成功：綠光 */
+        @keyframes glowGreen {
+            0% { box-shadow: 0 0 5px var(--success); border-color: var(--success); background-color: #e8f5e9; }
+            100% { box-shadow: 0 0 20px var(--success); border-color: var(--success); background-color: #c8e6c9; }
+        }
+
+        .card.correct {
+            animation: glowGreen 0.6s ease-in-out forwards;
+            pointer-events: none;
+        }
+
+        /* 配對成功後淡出，保留佔位空間 */
+        .card.matched {
             opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
         }
 
-        /* 英文目標框樣式 */
-        .slot {
-            background: #E8ECEF;
-            border: 2px dashed #BDC3C7;
-            border-radius: 8px;
-            text-align: center;
-            padding: 15px 5px;
-            min-height: 50px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .slot .en-text {
-            font-size: 16px;
-            color: #7F8C8D;
-            font-weight: bold;
-        }
-
-        .slot .zh-text {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--success);
-            display: none;
-            margin-bottom: 5px;
-        }
-
-        /* 配對成功狀態 */
-        .slot.success {
-            background-color: #E8F8F5;
-            border: 2px solid var(--success);
-            border-style: solid;
-            box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
-            cursor: default;
-        }
-        
-        .slot.success .zh-text {
-            display: block;
-        }
-
-        .slot.success .en-text {
-            font-size: 14px;
-            color: var(--success);
-        }
-
-        /* 配對失敗動畫 */
-        .slot.error {
-            border-color: var(--danger);
-            background-color: #FDEDEC;
-            animation: shake 0.4s;
-        }
-
-        @keyframes shake {
-            0% { transform: translateX(0); }
+        /* 配對失敗：紅光與震動 */
+        @keyframes shakeRed {
+            0%, 100% { transform: translateX(0); box-shadow: 0 0 10px var(--error); border-color: var(--error); background-color: #ffebee;}
             25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
+            75% { transform: translateX(5px); }
         }
 
-        /* 底部浮動狀態列 */
-        #selection-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: var(--text-main);
-            color: white;
-            text-align: center;
-            padding: 15px 0;
-            font-size: 18px;
-            transform: translateY(100%);
-            transition: transform 0.3s ease-in-out;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
-            z-index: 999;
+        .card.incorrect {
+            animation: shakeRed 0.4s ease-in-out;
+            pointer-events: none;
         }
 
-        #selection-bar.show {
-            transform: translateY(0);
+        /* 中文字卡特殊樣式 */
+        .zh-card {
+            font-size: 1.5rem;
+            cursor: grab;
+        }
+        .zh-card:active {
+            cursor: grabbing;
         }
 
-        #selected-char {
-            color: #F1C40F;
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0 10px;
-        }
-
-        /* 破關畫面 */
-        #overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 1000;
-            display: none;
-        }
-        
-        #overlay h1 { font-size: 40px; color: var(--success); margin-bottom: 20px; }
-        
-        button {
-            padding: 12px 30px;
-            font-size: 20px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
     </style>
 </head>
 <body>
 
-    <header>中英配對翻翻卡</header>
-    
-    <div class="container">
-        <div class="stats">配對進度: <span id="score">0</span> / 15</div>
-        
-        <h2>1. 點擊選擇中文字卡：</h2>
-        <div id="card-pool" class="grid-cards"></div>
-        
-        <h2>2. 點擊放入對應的英文框：</h2>
-        <div id="slot-pool" class="grid-slots"></div>
+    <div class="header">
+        <h1>中英單詞配對</h1>
+        <div class="progress">進度: <span id="score">0</span> / 15</div>
     </div>
 
-    <!-- 底部浮動列：提示目前選中的字 -->
-    <div id="selection-bar">
-        目前選取：<span id="selected-char"></span>
-    </div>
+    <div class="zone-title">👇 中文字卡 (點擊或拖曳)</div>
+    <div id="chinese-zone" class="grid-zone"></div>
 
-    <!-- 破關畫面 -->
-    <div id="overlay">
-        <h1>🎉 恭喜完成！</h1>
-        <button onclick="initGame()">再玩一次</button>
-    </div>
+    <div class="zone-title">🎯 英文目標 (點擊或放置)</div>
+    <div id="english-zone" class="grid-zone"></div>
 
     <script>
-        const wordData = [
-            { zh: '我', en: 'I / Me' },
-            { zh: '吃', en: 'Eat' },
-            { zh: '喝', en: 'Drink' },
-            { zh: '買', en: 'Buy' },
-            { zh: '錢', en: 'Money' },
-            { zh: '多', en: 'Many / More' },
-            { zh: '少', en: 'Few / Less' },
-            { zh: '大', en: 'Big' },
-            { zh: '小', en: 'Small' },
-            { zh: '請', en: 'Please' },
-            { zh: '要', en: 'Want' },
-            { zh: '不', en: 'Not / No' },
-            { zh: '給', en: 'Give' },
-            { zh: '茶', en: 'Tea' },
-            { zh: '飯', en: 'Rice / Meal' }
+        const vocabulary = [
+            { id: 1, zh: '我', en: 'I / Me' },
+            { id: 2, zh: '吃', en: 'Eat' },
+            { id: 3, zh: '喝', en: 'Drink' },
+            { id: 4, zh: '買', en: 'Buy' },
+            { id: 5, zh: '錢', en: 'Money' },
+            { id: 6, zh: '多', en: 'Many / More' },
+            { id: 7, zh: '少', en: 'Few / Less' },
+            { id: 8, zh: '大', en: 'Big' },
+            { id: 9, zh: '小', en: 'Small' },
+            { id: 10, zh: '請', en: 'Please' },
+            { id: 11, zh: '要', en: 'Want' },
+            { id: 12, zh: '不', en: 'Not / No' },
+            { id: 13, zh: '給', en: 'Give' },
+            { id: 14, zh: '茶', en: 'Tea' },
+            { id: 15, zh: '飯', en: 'Rice / Meal' }
         ];
 
-        let selectedNode = null;
-        let score = 0;
-        const totalScore = wordData.length;
+        let activeZh = null;
+        let activeEn = null;
+        let currentScore = 0;
 
-        // 洗牌演算法
+        // Fisher-Yates 陣列洗牌演算法
         function shuffle(array) {
             let currentIndex = array.length, randomIndex;
             while (currentIndex !== 0) {
@@ -279,103 +192,120 @@
         }
 
         function initGame() {
-            score = 0;
-            selectedNode = null;
-            document.getElementById('score').innerText = score;
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('selection-bar').classList.remove('show');
+            const zhZone = document.getElementById('chinese-zone');
+            const enZone = document.getElementById('english-zone');
             
-            const cardPool = document.getElementById('card-pool');
-            const slotPool = document.getElementById('slot-pool');
-            cardPool.innerHTML = '';
-            slotPool.innerHTML = '';
-
-            // 準備打亂的中文與英文陣列
-            let zhArray = shuffle([...wordData]);
-            let enArray = shuffle([...wordData]);
+            // 獨立打亂中文與英文陣列
+            const shuffledZh = shuffle([...vocabulary]);
+            const shuffledEn = shuffle([...vocabulary]);
 
             // 渲染中文字卡
-            zhArray.forEach(item => {
-                let card = document.createElement('div');
-                card.className = 'card';
-                card.innerText = item.zh;
-                card.dataset.zh = item.zh;
-                card.dataset.en = item.en;
+            shuffledZh.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card zh-card';
+                card.textContent = item.zh;
+                card.dataset.id = item.id;
+                card.draggable = true; // 支援桌機拖曳
+
+                // 點擊事件
+                card.addEventListener('click', () => handleCardClick(card, 'zh'));
                 
-                card.addEventListener('click', () => selectCard(card));
-                cardPool.appendChild(card);
+                // 拖曳事件 (Drag)
+                card.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', item.id);
+                    handleCardClick(card, 'zh');
+                });
+
+                zhZone.appendChild(card);
             });
 
             // 渲染英文目標框
-            enArray.forEach(item => {
-                let slot = document.createElement('div');
-                slot.className = 'slot';
-                slot.dataset.en = item.en;
-                
-                slot.innerHTML = `
-                    <div class="zh-text"></div>
-                    <div class="en-text">${item.en}</div>
-                `;
-                
-                slot.addEventListener('click', () => tryMatch(slot));
-                slotPool.appendChild(slot);
+            shuffledEn.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card en-card';
+                card.textContent = item.en;
+                card.dataset.id = item.id;
+
+                // 點擊事件
+                card.addEventListener('click', () => handleCardClick(card, 'en'));
+
+                // 放置事件 (Drop)
+                card.addEventListener('dragover', (e) => e.preventDefault());
+                card.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    const draggedCard = document.querySelector(`.zh-card[data-id="${draggedId}"]:not(.matched)`);
+                    if (draggedCard) {
+                        checkMatch(draggedCard, card);
+                    }
+                });
+
+                enZone.appendChild(card);
             });
         }
 
-        // 步驟 1: 選取中文字卡
-        function selectCard(cardNode) {
-            // 取消之前的選取狀態
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-            
-            selectedNode = cardNode;
-            cardNode.classList.add('selected');
+        // 處理雙向點擊邏輯 (支援先點中文或先點英文)
+        function handleCardClick(card, type) {
+            if (card.classList.contains('matched') || card.classList.contains('correct')) return;
 
-            // 更新底部浮動狀態列
-            document.getElementById('selected-char').innerText = cardNode.dataset.zh;
-            document.getElementById('selection-bar').classList.add('show');
+            if (type === 'zh') {
+                if (activeZh) activeZh.classList.remove('selected');
+                activeZh = card;
+                activeZh.classList.add('selected');
+            } else {
+                if (activeEn) activeEn.classList.remove('selected');
+                activeEn = card;
+                activeEn.classList.add('selected');
+            }
+
+            // 當中文與英文都已被選取時，進行驗證
+            if (activeZh && activeEn) {
+                checkMatch(activeZh, activeEn);
+            }
         }
 
-        // 步驟 2: 點擊英文框嘗試配對
-        function tryMatch(slotNode) {
-            if (!selectedNode) return; // 沒有選取中文字就點擊無效
-            if (slotNode.classList.contains('success')) return; // 已經配對成功的框不處理
+        // 驗證配對邏輯
+        function checkMatch(zhCard, enCard) {
+            const isMatch = zhCard.dataset.id === enCard.dataset.id;
 
-            const targetEn = slotNode.dataset.en;
-            const selectedEn = selectedNode.dataset.en;
+            // 清除選取狀態
+            zhCard.classList.remove('selected');
+            enCard.classList.remove('selected');
+            activeZh = null;
+            activeEn = null;
 
-            if (targetEn === selectedEn) {
-                // 配對成功
-                slotNode.classList.add('success');
-                slotNode.querySelector('.zh-text').innerText = selectedNode.dataset.zh;
+            if (isMatch) {
+                // 成功：加入綠光動畫
+                zhCard.classList.add('correct');
+                enCard.classList.add('correct');
                 
-                // 隱藏中文字卡
-                selectedNode.classList.add('matched-hide');
-                selectedNode.classList.remove('selected');
-                selectedNode = null;
+                currentScore++;
+                document.getElementById('score').textContent = currentScore;
 
-                // 重置浮動狀態列
-                document.getElementById('selection-bar').classList.remove('show');
-                
-                score++;
-                document.getElementById('score').innerText = score;
-
-                // 檢查是否過關
-                if (score === totalScore) {
-                    setTimeout(() => {
-                        document.getElementById('overlay').style.display = 'flex';
-                    }, 500);
-                }
-            } else {
-                // 配對失敗：震動並閃爍紅光
-                slotNode.classList.add('error');
+                // 動畫結束後淡出消失
                 setTimeout(() => {
-                    slotNode.classList.remove('error');
-                }, 400);
+                    zhCard.classList.add('matched');
+                    enCard.classList.add('matched');
+                    
+                    if (currentScore === 15) {
+                        setTimeout(() => alert('恭喜！您已成功完成所有配對！'), 300);
+                    }
+                }, 600); // 配合 CSS 綠光動畫時間
+            } else {
+                // 失敗：加入紅光與震動動畫
+                zhCard.classList.add('incorrect');
+                enCard.classList.add('incorrect');
+
+                // 震動結束後移除錯誤狀態，允許再次點擊
+                setTimeout(() => {
+                    zhCard.classList.remove('incorrect');
+                    enCard.classList.remove('incorrect');
+                }, 400); // 配合 CSS 震動動畫時間
             }
         }
 
         // 啟動遊戲
-        window.onload = initGame;
+        initGame();
     </script>
 </body>
 </html>
