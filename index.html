@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>中英配對學習遊戲</title>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --success: #2ECC71;
+            --danger: #E74C3C;
+            --bg-color: #F5F7FA;
+            --card-bg: #FFFFFF;
+            --text-main: #2C3E50;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'LiHei Pro', '微軟正黑體', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 80px; /* 留給底部浮動列的空間 */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .stats {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        h2 {
+            font-size: 18px;
+            border-left: 4px solid var(--primary);
+            padding-left: 10px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        /* 網格系統：字卡區與目標框區 */
+        .grid-cards, .grid-slots {
+            display: grid;
+            gap: 10px;
+        }
+
+        .grid-cards { grid-template-columns: repeat(5, 1fr); }
+        .grid-slots { grid-template-columns: repeat(3, 1fr); }
+
+        @media (max-width: 500px) {
+            .grid-cards { grid-template-columns: repeat(4, 1fr); }
+            .grid-slots { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* 中文字卡樣式 */
+        .card {
+            background: var(--card-bg);
+            border: 2px solid #DCDDE1;
+            border-radius: 8px;
+            text-align: center;
+            padding: 15px 5px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+
+        .card.selected {
+            border-color: var(--primary);
+            background-color: #EBF5FF;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
+        }
+
+        .card.matched-hide {
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        /* 英文目標框樣式 */
+        .slot {
+            background: #E8ECEF;
+            border: 2px dashed #BDC3C7;
+            border-radius: 8px;
+            text-align: center;
+            padding: 15px 5px;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .slot .en-text {
+            font-size: 16px;
+            color: #7F8C8D;
+            font-weight: bold;
+        }
+
+        .slot .zh-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--success);
+            display: none;
+            margin-bottom: 5px;
+        }
+
+        /* 配對成功狀態 */
+        .slot.success {
+            background-color: #E8F8F5;
+            border: 2px solid var(--success);
+            border-style: solid;
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+            cursor: default;
+        }
+        
+        .slot.success .zh-text {
+            display: block;
+        }
+
+        .slot.success .en-text {
+            font-size: 14px;
+            color: var(--success);
+        }
+
+        /* 配對失敗動畫 */
+        .slot.error {
+            border-color: var(--danger);
+            background-color: #FDEDEC;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0
