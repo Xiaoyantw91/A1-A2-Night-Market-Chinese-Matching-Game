@@ -6,24 +6,23 @@
     <title>中英單詞配對遊戲</title>
     <style>
         :root {
-            --primary: #4a90e2;
-            --success: #4caf50;
-            --error: #f44336;
-            --bg: #f5f7fa;
-            --card-bg: #ffffff;
-            --text: #333333;
+            --success: #00e676;
+            --error: #ff1744;
+            --text-shadow: rgba(0, 0, 0, 0.4);
         }
 
         * {
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
             margin: 0;
             padding: 15px;
-            background-color: var(--bg);
-            color: var(--text);
+            background-color: #f4f7f6;
+            background-image: radial-gradient(#d1d8e0 2px, transparent 2px);
+            background-size: 20px 20px;
+            color: #333;
             text-align: center;
         }
 
@@ -31,38 +30,47 @@
             margin-bottom: 20px;
             position: sticky;
             top: 0;
-            background: rgba(245, 247, 250, 0.95);
-            padding: 10px 0;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 0;
             z-index: 100;
-            border-bottom: 2px solid #e0e0e0;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            backdrop-filter: blur(5px);
         }
 
         h1 {
             margin: 0 0 10px 0;
-            font-size: 1.5rem;
-            color: var(--primary);
+            font-size: 1.6rem;
+            color: #2c3e50;
+            font-weight: 900;
         }
 
         .progress {
             font-size: 1.2rem;
-            font-weight: bold;
+            font-weight: 800;
+            color: #636e72;
+        }
+        
+        #score {
+            color: #ff4757;
+            font-size: 1.4rem;
         }
 
         .zone-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin: 15px 0 10px 0;
-            color: #555;
+            font-size: 1.2rem;
+            font-weight: 900;
+            margin: 20px 0 10px 0;
+            color: #2d3436;
             text-align: left;
             padding-left: 5px;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
         }
 
-        /* 網格佈局：手機預設 3 欄，平板/桌機 5 欄 */
         .grid-zone {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 25px;
         }
 
         @media (min-width: 768px) {
@@ -73,73 +81,79 @@
         }
 
         .card {
-            background: var(--card-bg);
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 15px 5px;
-            font-size: 1.1rem;
-            font-weight: bold;
+            border-radius: 12px;
+            padding: 10px 5px;
+            font-weight: 900;
             cursor: pointer;
             user-select: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 60px;
+            min-height: 70px;
             word-break: break-word;
+            color: #ffffff;
+            text-shadow: 1px 1.5px 2px var(--text-shadow);
+            box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
         }
 
         .card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 7px 0 rgba(0,0,0,0.15);
+        }
+        
+        .card:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.15);
         }
 
-        /* 點擊選取狀態 */
         .card.selected {
-            border-color: var(--primary);
-            background-color: #e3f2fd;
-            box-shadow: 0 0 8px var(--primary);
-            transform: scale(1.05);
+            outline: 4px solid #ffffff;
+            outline-offset: -2px;
+            box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.9), 0 5px 0 rgba(0,0,0,0.15) !important;
+            transform: scale(1.05) translateY(-2px);
+            z-index: 10;
         }
 
-        /* 配對成功：綠光 */
         @keyframes glowGreen {
-            0% { box-shadow: 0 0 5px var(--success); border-color: var(--success); background-color: #e8f5e9; }
-            100% { box-shadow: 0 0 20px var(--success); border-color: var(--success); background-color: #c8e6c9; }
+            0% { filter: hue-rotate(0deg); outline: 4px solid var(--success); box-shadow: 0 0 10px var(--success); }
+            100% { background: var(--success) !important; outline: 4px solid #fff; box-shadow: 0 0 30px var(--success); }
         }
 
         .card.correct {
-            animation: glowGreen 0.6s ease-in-out forwards;
+            animation: glowGreen 0.6s ease-in-out forwards !important;
             pointer-events: none;
         }
 
-        /* 配對成功後淡出，保留佔位空間 */
         .card.matched {
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.5s ease;
         }
 
-        /* 配對失敗：紅光與震動 */
         @keyframes shakeRed {
-            0%, 100% { transform: translateX(0); box-shadow: 0 0 10px var(--error); border-color: var(--error); background-color: #ffebee;}
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px) rotate(-2deg); outline: 4px solid var(--error); }
+            75% { transform: translateX(6px) rotate(2deg); outline: 4px solid var(--error); background: var(--error) !important;}
         }
 
         .card.incorrect {
-            animation: shakeRed 0.4s ease-in-out;
+            animation: shakeRed 0.4s ease-in-out !important;
             pointer-events: none;
+            z-index: 10;
         }
 
-        /* 中文字卡特殊樣式 */
         .zh-card {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             cursor: grab;
         }
         .zh-card:active {
             cursor: grabbing;
+        }
+        .en-card {
+            font-size: 1.1rem;
+            line-height: 1.2;
         }
 
     </style>
@@ -147,14 +161,16 @@
 <body>
 
     <div class="header">
-        <h1>中英單詞配對</h1>
+        <h1>✨ 中英單詞配對 ✨</h1>
         <div class="progress">進度: <span id="score">0</span> / 15</div>
     </div>
 
-    <div class="zone-title">👇 中文字卡 (點擊或拖曳)</div>
+    <!-- 中文區 -->
+    <div class="zone-title">👇 中文字卡區</div>
     <div id="chinese-zone" class="grid-zone"></div>
 
-    <div class="zone-title">🎯 英文目標 (點擊或放置)</div>
+    <!-- 英文區：如果您之前複製缺少下半部，這一段會不見 -->
+    <div class="zone-title">🎯 英文目標區</div>
     <div id="english-zone" class="grid-zone"></div>
 
     <script>
@@ -173,14 +189,31 @@
             { id: 12, zh: '不', en: 'Not / No' },
             { id: 13, zh: '給', en: 'Give' },
             { id: 14, zh: '茶', en: 'Tea' },
-            { id: 15, zh: '飯', en: 'Rice / Meal' }
+            { id: 15, zh: '飯', en: 'Rice/Meal' }
+        ];
+
+        const gradients = [
+            'linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)',
+            'linear-gradient(135deg, #4FACFE 0%, #00F2FE 100%)',
+            'linear-gradient(135deg, #43E97B 0%, #38F9D7 100%)',
+            'linear-gradient(135deg, #FA709A 0%, #FEE140 100%)',
+            'linear-gradient(135deg, #C471F5 0%, #FA71CD 100%)',
+            'linear-gradient(135deg, #F83600 0%, #F9D423 100%)',
+            'linear-gradient(135deg, #16A085 0%, #F4D03F 100%)',
+            'linear-gradient(135deg, #B224EF 0%, #7579FF 100%)',
+            'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)',
+            'linear-gradient(135deg, #FF0844 0%, #FFB199 100%)',
+            'linear-gradient(135deg, #11998E 0%, #38EF7D 100%)',
+            'linear-gradient(135deg, #9D50BB 0%, #6E48AA 100%)',
+            'linear-gradient(135deg, #F093FB 0%, #F5576C 100%)',
+            'linear-gradient(135deg, #F2994A 0%, #F2C94C 100%)',
+            'linear-gradient(135deg, #4CB8C4 0%, #3CD3AD 100%)'
         ];
 
         let activeZh = null;
         let activeEn = null;
         let currentScore = 0;
 
-        // Fisher-Yates 陣列洗牌演算法
         function shuffle(array) {
             let currentIndex = array.length, randomIndex;
             while (currentIndex !== 0) {
@@ -195,22 +228,21 @@
             const zhZone = document.getElementById('chinese-zone');
             const enZone = document.getElementById('english-zone');
             
-            // 獨立打亂中文與英文陣列
             const shuffledZh = shuffle([...vocabulary]);
             const shuffledEn = shuffle([...vocabulary]);
+            const zhColors = shuffle([...gradients]);
+            const enColors = shuffle([...gradients]);
 
-            // 渲染中文字卡
-            shuffledZh.forEach(item => {
+            shuffledZh.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = 'card zh-card';
                 card.textContent = item.zh;
                 card.dataset.id = item.id;
-                card.draggable = true; // 支援桌機拖曳
+                card.style.backgroundImage = zhColors[index];
+                card.draggable = true;
 
-                // 點擊事件
                 card.addEventListener('click', () => handleCardClick(card, 'zh'));
                 
-                // 拖曳事件 (Drag)
                 card.addEventListener('dragstart', (e) => {
                     e.dataTransfer.setData('text/plain', item.id);
                     handleCardClick(card, 'zh');
@@ -219,17 +251,15 @@
                 zhZone.appendChild(card);
             });
 
-            // 渲染英文目標框
-            shuffledEn.forEach(item => {
+            shuffledEn.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = 'card en-card';
                 card.textContent = item.en;
                 card.dataset.id = item.id;
+                card.style.backgroundImage = enColors[index];
 
-                // 點擊事件
                 card.addEventListener('click', () => handleCardClick(card, 'en'));
 
-                // 放置事件 (Drop)
                 card.addEventListener('dragover', (e) => e.preventDefault());
                 card.addEventListener('drop', (e) => {
                     e.preventDefault();
@@ -244,7 +274,6 @@
             });
         }
 
-        // 處理雙向點擊邏輯 (支援先點中文或先點英文)
         function handleCardClick(card, type) {
             if (card.classList.contains('matched') || card.classList.contains('correct')) return;
 
@@ -258,53 +287,45 @@
                 activeEn.classList.add('selected');
             }
 
-            // 當中文與英文都已被選取時，進行驗證
             if (activeZh && activeEn) {
                 checkMatch(activeZh, activeEn);
             }
         }
 
-        // 驗證配對邏輯
         function checkMatch(zhCard, enCard) {
             const isMatch = zhCard.dataset.id === enCard.dataset.id;
 
-            // 清除選取狀態
             zhCard.classList.remove('selected');
             enCard.classList.remove('selected');
             activeZh = null;
             activeEn = null;
 
             if (isMatch) {
-                // 成功：加入綠光動畫
                 zhCard.classList.add('correct');
                 enCard.classList.add('correct');
                 
                 currentScore++;
                 document.getElementById('score').textContent = currentScore;
 
-                // 動畫結束後淡出消失
                 setTimeout(() => {
                     zhCard.classList.add('matched');
                     enCard.classList.add('matched');
                     
                     if (currentScore === 15) {
-                        setTimeout(() => alert('恭喜！您已成功完成所有配對！'), 300);
+                        setTimeout(() => alert('🎉 恭喜！您已成功完成所有配對！'), 400);
                     }
-                }, 600); // 配合 CSS 綠光動畫時間
+                }, 600);
             } else {
-                // 失敗：加入紅光與震動動畫
                 zhCard.classList.add('incorrect');
                 enCard.classList.add('incorrect');
 
-                // 震動結束後移除錯誤狀態，允許再次點擊
                 setTimeout(() => {
                     zhCard.classList.remove('incorrect');
                     enCard.classList.remove('incorrect');
-                }, 400); // 配合 CSS 震動動畫時間
+                }, 400);
             }
         }
 
-        // 啟動遊戲
         initGame();
     </script>
 </body>
