@@ -66,9 +66,10 @@
             text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
         }
 
+        /* 網格佈局：手機改為 2 欄較適合 10 個項目，平板/桌機維持 5 欄 */
         .grid-zone {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 12px;
             margin-bottom: 25px;
         }
@@ -162,34 +163,30 @@
 
     <div class="header">
         <h1>✨ 中英單詞配對 ✨</h1>
-        <div class="progress">進度: <span id="score">0</span> / 15</div>
+        <div class="progress">進度: <span id="score">0</span> / 10</div>
     </div>
 
     <!-- 中文區 -->
     <div class="zone-title">👇 中文字卡區</div>
     <div id="chinese-zone" class="grid-zone"></div>
 
-    <!-- 英文區：如果您之前複製缺少下半部，這一段會不見 -->
+    <!-- 英文區 -->
     <div class="zone-title">🎯 英文目標區</div>
     <div id="english-zone" class="grid-zone"></div>
 
     <script>
+        // 保留 10 組單字
         const vocabulary = [
             { id: 1, zh: '我', en: 'I / Me' },
             { id: 2, zh: '吃', en: 'Eat' },
             { id: 3, zh: '喝', en: 'Drink' },
             { id: 4, zh: '買', en: 'Buy' },
             { id: 5, zh: '錢', en: 'Money' },
-            { id: 6, zh: '多', en: 'Many / More' },
-            { id: 7, zh: '少', en: 'Few / Less' },
-            { id: 8, zh: '大', en: 'Big' },
-            { id: 9, zh: '小', en: 'Small' },
-            { id: 10, zh: '請', en: 'Please' },
-            { id: 11, zh: '要', en: 'Want' },
-            { id: 12, zh: '不', en: 'Not / No' },
-            { id: 13, zh: '給', en: 'Give' },
-            { id: 14, zh: '茶', en: 'Tea' },
-            { id: 15, zh: '飯', en: 'Rice/Meal' }
+            { id: 6, zh: '要', en: 'Want' },
+            { id: 7, zh: '不', en: 'Not / No' },
+            { id: 8, zh: '給', en: 'Give' },
+            { id: 9, zh: '茶', en: 'Tea' },
+            { id: 10, zh: '飯', en: 'Rice/Meal' }
         ];
 
         const gradients = [
@@ -230,8 +227,10 @@
             
             const shuffledZh = shuffle([...vocabulary]);
             const shuffledEn = shuffle([...vocabulary]);
-            const zhColors = shuffle([...gradients]);
-            const enColors = shuffle([...gradients]);
+            
+            // 從色彩庫中隨機挑選 10 個顏色打亂使用
+            const zhColors = shuffle([...gradients]).slice(0, 10);
+            const enColors = shuffle([...gradients]).slice(0, 10);
 
             shuffledZh.forEach((item, index) => {
                 const card = document.createElement('div');
@@ -311,7 +310,8 @@
                     zhCard.classList.add('matched');
                     enCard.classList.add('matched');
                     
-                    if (currentScore === 15) {
+                    // 過關條件更新為 10
+                    if (currentScore === 10) {
                         setTimeout(() => alert('🎉 恭喜！您已成功完成所有配對！'), 400);
                     }
                 }, 600);
